@@ -7,7 +7,7 @@ import seaborn as sns
 from PIL import Image
 from keras import Sequential, Input
 from keras.layers import Conv3D, MaxPooling3D, Flatten, Dense, Dropout, Concatenate
-from keras.utils.vis_utils import plot_model
+from keras.src.utils import plot_model
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import KFold
@@ -17,9 +17,9 @@ import tensorflow as tf
 def create_model(input_shape_img, input_shape_x, input_shape_y, input_shape_z):
     # Define input layers for each type of data
     input_img = Input(shape=input_shape_img, name='input_img')
-    input_x = Input(shape=input_shape_x, name='input_x')
-    input_y = Input(shape=input_shape_y, name='input_y')
-    input_z = Input(shape=input_shape_z, name= 'input_z')
+    input_x = Input(shape=input_shape_x, name='input_x = E')
+    input_y = Input(shape=input_shape_y, name='input_y = A')
+    input_z = Input(shape=input_shape_z, name= 'input_z = e septaal')
 
     # 3D convolutional layer for images
     conv3d_img = Conv3D(32, kernel_size=(3, 3, 3), activation='relu', padding='same')(input_img)
@@ -57,7 +57,7 @@ def create_model(input_shape_img, input_shape_x, input_shape_y, input_shape_z):
     model = tf.keras.Model(inputs=[input_img, input_x, input_y,input_z], outputs=output)
 
     # Plot the model architecture and save it as an image
-    plot_model(model, to_file='fullmodel.png', show_shapes=True, show_layer_names=True)
+    plot_model(model, to_file='image+e+a+e septaal.png', show_shapes=True, show_layer_names=True)
     
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -164,7 +164,7 @@ def load_data(gif_folder, verhoogdedruk, verlaagdedruk):
                 z_value = np.nan
             if pd.notna(x_value) and pd.notna(y_value) and pd.notna(z_value):
                 img_path = os.path.join(gif_folder, filename)
-                frames = load_gif_frames(img_path, target_size=(224, 224))  # Load all frames
+                frames = load_gif_frames(img_path)  # Load all frames
                 data.append((frames, x_value, y_value,z_value, label))
 
     # Convert data to numpy arrays
@@ -182,15 +182,12 @@ def load_data(gif_folder, verhoogdedruk, verlaagdedruk):
     return frame_arrays, x_values, y_values, z_values, labels
 
 
-def load_gif_frames(gif_path, num_frames=20, target_size=(224, 224)):
+def load_gif_frames(gif_path, num_frames=20):
     frames = []
     with Image.open(gif_path) as img:
         for i in range(min(num_frames, img.n_frames)):
             img.seek(i)
             frame = img.copy()
-
-            # Resize the frame to the target size
-            frame = frame.resize(target_size, Image.LANCZOS)
 
             # Convert to grayscale
             frame = frame.convert('L')
@@ -211,6 +208,12 @@ def plot_confusion_matrix(confusion_matrix, labels, ds_type):
     plt.yticks(np.arange(len(labels)) + 0.5, labels)
     plt.show()
 
+def tests(images, labels, x_values, y_values, z_values):
+    assert images.shape[0] == len(x_values) == len(y_values) == len(z_values) == len(labels), "Data shapes do not match."
+    assert x_values.shape == (len(x_values), 1), "x_values have an unexpected shape."
+    assert y_values.shape == (len(y_values), 1), "y_values have an unexpected shape."
+    assert z_values.shape == (len(z_values),1), "z_values haev an unexepcted shape."
+    assert images.shape[0] == len(labels), "Number of images and labels do not match."
 
 def main():
     # File paths
@@ -219,10 +222,7 @@ def main():
     normal_pressure = r'C:\Users\oskar\Downloads\Def Inclusie NORMALE DRUK EchoAI_versie 7.23 (cave zonder 5k).xlsx'
 
     images, x_values, y_values, z_values, labels = load_data(gif_folder, elevated_pressure, normal_pressure)
-    assert images.shape[0] == len(x_values) == len(y_values) == len(labels), "Data shapes do not match."
-    assert x_values.shape == (len(x_values), 1), "x_values have an unexpected shape."
-    assert y_values.shape == (len(y_values), 1), "y_values have an unexpected shape."
-    assert images.shape[0] == len(labels), "Number of images and labels do not match."
+    tests(images, labels, x_values, y_values,z_values)
 
     print("Loaded Data:")
     print("Number of Images:", len(images))
@@ -281,6 +281,10 @@ def main():
     for i, confusion_matrix_result in enumerate(all_confusion_matrices):
         print(f"Confusion Matrix - Fold {i + 1}:")
         print(confusion_matrix_result)
+
+
+
+
 
 if __name__ == "__main__":
     main()
